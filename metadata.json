@@ -1,0 +1,5 @@
+{
+  "name": "PaisaSoft ",
+  "description": "An integrated e-commerce storefront and inventory management system for the 'El Paisa' grocery store. It features a public-facing product catalog and a private, secure dashboard for administrators to manage stock and view reports, all powered by AI.",
+  "requestFramePermissions": []
+}
