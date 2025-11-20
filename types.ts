@@ -35,6 +35,8 @@ export interface User {
   provider?: 'email' | 'google' | 'facebook' | 'twitter';
 }
 
+export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed';
+
 export interface Order {
   id: string;
   userId: number | string; // Updated to support Firebase string UIDs
@@ -42,7 +44,10 @@ export interface Order {
   items: CartItem[];
   total: number;
   date: string;
+  status: OrderStatus;
 }
+
+export type ReportStatus = 'Pending' | 'Reviewing' | 'Approved' | 'Rejected';
 
 export interface ProductReport {
   id: string;
@@ -51,7 +56,8 @@ export interface ProductReport {
   description: string;
   evidenceUrl?: string; // Cloudinary URL
   date: string;
-  status: 'Pending' | 'Reviewed';
+  status: ReportStatus;
+  adminResponse?: string; // Justification from admin
 }
 
 export interface ElectronicInvoiceResponse {

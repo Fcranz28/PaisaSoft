@@ -5,7 +5,7 @@ import { Product } from '../types';
 // IMPORTANT: For this to work, the Google Sheet must be public ("Anyone with the link can view").
 const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1rozeHODV_hj8ndzJAs_qb5prCSsuK_0rGayItEuKAYE/export?format=csv&gid=0"; // gid=0 corresponds to the "Products" tab
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
 const productSchema = {
     type: Type.ARRAY,

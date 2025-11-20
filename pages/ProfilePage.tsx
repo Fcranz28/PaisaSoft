@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { User, Order, CartItem } from '../types';
+import { User, Order, CartItem, OrderStatus } from '../types';
 import Header from '../components/Header';
 import * as api from '../services/apiService';
 
@@ -14,6 +14,63 @@ interface ProfilePageProps {
   onCartClick: () => void;
   cartCount: number;
 }
+
+const OrderStepper = ({ status }: { status: OrderStatus }) => {
+    const steps = [
+        { key: 'pending', label: 'Pedido Realizado' },
+        { key: 'preparing', label: 'Armando Pedido' },
+        { key: 'ready', label: '¡Ya puedes pasar por tu pedido!' },
+        { key: 'completed', label: 'Entregado' }
+    ];
+
+    // Mapping status to step index: 0, 1, 2, 3.
+    let activeIndex = 0;
+    if (status === 'preparing') activeIndex = 1;
+    else if (status === 'ready') activeIndex = 2;
+    else if (status === 'completed') activeIndex = 3;
+
+    // Calculate progress bar width based on 3 intervals (4 steps) -> 33.33% per step
+    const progressPercentage = Math.min(activeIndex * 33.33, 100);
+
+    return (
+        <div className="mt-6 relative">
+            <div className="flex items-center justify-between w-full">
+                {steps.map((step, index) => {
+                    const isCompleted = index < activeIndex;
+                    const isActive = index === activeIndex;
+                    
+                    return (
+                        <div key={step.key} className="flex flex-col items-center relative z-10 w-1/4">
+                            <div 
+                                className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-500
+                                    ${isCompleted || isActive
+                                        ? 'bg-green-600 border-green-600 text-white' 
+                                        : 'bg-white border-gray-300 text-gray-300'
+                                    }`}
+                            >
+                                {isCompleted ? (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                                ) : (
+                                    <span className="text-xs font-bold">{index + 1}</span>
+                                )}
+                            </div>
+                            <p className={`text-[10px] sm:text-xs mt-2 font-medium text-center leading-tight px-1 ${isActive || isCompleted ? 'text-black' : 'text-gray-400'}`}>
+                                {step.label}
+                            </p>
+                        </div>
+                    );
+                })}
+            </div>
+            {/* Connecting Line Background */}
+            <div className="absolute top-4 left-0 w-full h-0.5 bg-gray-200 -z-0"></div>
+            {/* Connecting Line Progress */}
+            <div 
+                className="absolute top-4 left-0 h-0.5 bg-green-600 -z-0 transition-all duration-500" 
+                style={{ width: `${progressPercentage}%` }}
+            ></div>
+        </div>
+    );
+};
 
 const ProfilePage: React.FC<ProfilePageProps> = ({ user, orders, onLogout, onNavigateHome, onCartClick, cartCount }) => {
   const [downloadingOrderId, setDownloadingOrderId] = useState<string | null>(null);
@@ -62,6 +119,22 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, orders, onLogout, onNav
     }
   };
 
+  const handleCopyTrackingId = (id: string) => {
+      navigator.clipboard.writeText(id).then(() => {
+          Swal.fire({
+              toast: true,
+              position: 'top',
+              icon: 'success',
+              title: 'Código Copiado',
+              showConfirmButton: false,
+              timer: 1000,
+              background: '#1a1a1a',
+              color: '#fff',
+              iconColor: '#fff'
+          });
+      });
+  };
+
   const mostOrdered = getMostOrderedProducts();
 
   return (
@@ -84,19 +157,38 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, orders, onLogout, onNav
             <div className="space-y-6">
               {orders.length > 0 ? (
                 orders.map(order => (
-                  <div key={order.id} className="bg-white p-6 rounded-lg shadow-md">
-                    <div className="flex justify-between items-start mb-4">
+                  <div key={order.id} className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+                    <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
                       <div>
-                        <p className="font-bold text-lg text-slate-800">Pedido #{order.id.split('-')[1]}</p>
+                        <div className="flex items-center gap-2">
+                            <p className="font-bold text-lg text-slate-800">Pedido #{order.id.split('-')[1]}</p>
+                            {/* Discrete Tracking ID */}
+                            <button 
+                                onClick={() => handleCopyTrackingId(order.id)}
+                                className="flex items-center text-xs text-gray-400 hover:text-gray-600 transition-colors gap-1"
+                                title="Copiar código de seguimiento"
+                            >
+                                <span>(ID: {order.id})</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5" />
+                                </svg>
+                            </button>
+                        </div>
                         <p className="text-sm text-slate-500">
                           {new Date(order.date).toLocaleDateString('es-PE', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right mt-2 sm:mt-0">
                         <p className="text-sm text-slate-500">Total</p>
                         <p className="font-bold text-xl text-blue-600">S/.{order.total.toFixed(2)}</p>
                       </div>
                     </div>
+
+                    {/* Progress Stepper */}
+                    <div className="mb-8 px-2">
+                        <OrderStepper status={order.status} />
+                    </div>
+
                     <ul className="divide-y divide-slate-200 border-t pt-2 mb-4">
                       {order.items.map(item => (
                         <li key={item.id} className="py-2 flex items-center justify-between">
