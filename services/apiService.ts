@@ -671,7 +671,13 @@ export const resolveReport = async (reportId: string, status: ReportStatus, admi
         })
         .eq('id', reportId);
     
-    if (error) throw new Error("Error actualizando reporte: " + error.message);
+    if (error) {
+        // Help user identify missing column issue
+        if (error.message.includes('admin_response')) {
+            throw new Error("La columna 'admin_response' no existe en la base de datos. Ejecute el comando SQL: ALTER TABLE reports ADD COLUMN IF NOT EXISTS admin_response text;");
+        }
+        throw new Error("Error actualizando reporte: " + error.message);
+    }
 };
 
 
